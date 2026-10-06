@@ -17,9 +17,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" report T-041 "<what happened>"
 # finish — a task with no done-test cannot close, so supply one in the same call
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" report T-041 "<what exists now that did not this morning>" done "<done-test>"
 
-# drop / archive / reopen / unstart
+# drop / reopen / unstart (finished work is always `done`, never archived: Clio refuses archived)
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" report T-041 "<why>" dropped
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" report T-041 "<why>" archived
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" report T-041 "<note>" doing
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" report T-041 "<note>" todo
 ```

@@ -13,7 +13,7 @@
 #   clio.sh checkin <text> [id,id,...]              check in: what you're on today
 #   clio.sh off     [text]                          check in as off today
 #   clio.sh claim   <id>                            put your name on an unclaimed task
-#   clio.sh report  <id> <text> [status] [doneTest] the verb (status: done|dropped|archived|doing|todo)
+#   clio.sh report  <id> <text> [status] [doneTest] the verb (status: done|dropped|doing|todo)
 #   clio.sh note    <text>                          off-board report → your day file
 #   clio.sh new     <title> [field=value ...]       mint a task (project|sprint|assignee|doneTest|brief|unit)
 #   clio.sh edit    <id> field=value ...            task properties (title|brief|project|sprint|assignee|unit|doneTest)
