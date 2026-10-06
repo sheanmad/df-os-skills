@@ -1,0 +1,19 @@
+{
+  "name": "df-os-skills",
+  "owner": {
+    "name": "DF Labs",
+    "url": "https://github.com/sheanmad"
+  },
+  "plugins": [
+    {
+      "name": "calliope",
+      "source": "./calliope",
+      "description": "Calliope, the DF Labs docs app, from any Claude Code session: find, read, write pages and folders, attach to tasks."
+    },
+    {
+      "name": "clio",
+      "source": "./clio",
+      "description": "Clio, the DF Labs board, from any Claude Code session: orient, check in, report, mint a task, note."
+    }
+  ]
+}
