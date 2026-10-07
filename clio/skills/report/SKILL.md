@@ -14,7 +14,8 @@ receipt. The reporter's word is final — no approval step.
 # progress (starts a todo, or adds a trail line to a doing task)
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" report T-041 "<what happened>"
 
-# finish — a task with no done-test cannot close, so supply one in the same call
+# finish — the words are the receipt; a done-test is optional and, if given, is written in the same commit
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" report T-041 "<what exists now that did not this morning>" done
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" report T-041 "<what exists now that did not this morning>" done "<done-test>"
 
 # drop / reopen / unstart (finished work is always `done`, never archived: Clio refuses archived)
@@ -37,7 +38,7 @@ How to do it well:
    the target task, and CONFIRM before sending. A report is a signed commit;
    never fire one they have not seen.
 5. Surface the commit hash the server returns. Relay refusals as-is (e.g.
-   "done-test required").
+   "T-099 is not a task on this board", "a report needs words — what happened?").
 
 If the task id is unclear, run `mine` and let them pick.
 

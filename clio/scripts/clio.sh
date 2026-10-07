@@ -114,7 +114,8 @@ case "$cmd" in
            req POST /api/commit "$(jobj "text=$(jenc "${1:-off today}")" "tasks=[]" "off=true")" ;;
   claim)   ensure_auth
            me="$(req GET /api/me | python3 -c 'import json,sys; print(json.load(sys.stdin)["slug"])')"
-           req PATCH "/api/tasks/$(echo "$1" | tr a-z A-Z)" "$(jobj "assignee=$(jenc "$me")")" ;;
+           # refused (409) if someone took it since you looked, as in the web face
+           req PATCH "/api/tasks/$(echo "$1" | tr a-z A-Z)" "$(jobj "assignee=$(jenc "$me")" 'expect={"assignee":""}')" ;;
   report)  ensure_auth
            id="$(echo "$1" | tr a-z A-Z)"; text="$2"; status="${3:-}"; dt="${4:-}"
            parts=("text=$(jenc "$text")")

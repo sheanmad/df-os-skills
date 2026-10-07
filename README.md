@@ -66,8 +66,8 @@ Say what the day is for. Tasks, words, or both. Or say you are off.
 
 - **Every day.** On the days you work and on the days you rest. An off day is
   a check-in too. This is how the record tells resting from vanishing.
-- **Last line wins.** Changing your mind at 2pm is another check-in, not an
-  edit.
+- **One check-in a day, edited in place.** Checking in again replaces it.
+  The same words again change nothing.
 - **No proof, no status.** It is planning and presence. Nothing on the board
   flags anyone for it; the Thursday report reads it from the brain.
 
@@ -84,8 +84,9 @@ edited. Your word is final; nobody approves it.
   on a waiting task is what starting means.
 - **Finishing carries the receipt.** "Done" makes your line the proof, so it
   names what exists now that did not this morning: a link, a file, a number.
-  If you cannot name it, it is not done — report the progress instead. A task
-  with no done-test cannot be closed; the skill will ask for one.
+  If you cannot name it, it is not done — report the progress instead. A done
+  needs only the words, which become the receipt. A done-test is optional; one
+  sent with the report is written in the same commit.
 - **Do not launder the day.** If the plan said X and the day produced Y, the
   report says Y. The gap is signal, not failure.
 - **Backfill is the point.** Realise mid-conversation that something you just
@@ -102,7 +103,7 @@ minted.
 
 | Skill | Say | Does |
 |---|---|---|
-| `/clio:orient` | "what's going on in DF", "show the board" | The whole board: this week's sprint, what is moving, what has gone quiet, what is homeless, each project's focus. Read-only. |
+| `/clio:orient` | "what's going on in DF", "show the board" | The whole board: this week's sprint, what is moving, what has gone quiet, the backlog (live work not planned into the open week), each project's focus. Read-only. |
 | `/clio:mine` | "what's on my plate" | Your live tasks, with projects. Read-only. |
 | `/clio:today` | "who checked in today", "what happened today" | Today across the team, check-ins and reports apart. Read-only. |
 | `/clio:task` | "what happened on T-041" | One task in full, with its trail. Read-only. |
@@ -142,7 +143,7 @@ that comes with the assistant and its own app.
   admin for a new one, or remove the file to sign in with your password.
 - **"a viewer reads the board — it does not write to it"**: your account is a
   viewer. Ask an admin for a member account.
-- **"done-test required"**: you tried to finish a task that has none. Give one
-  in the same report: "…done, test: poster is public and registration is live".
+- **"T-041 changed since you opened it"** on a claim: someone took the task a
+  moment before you. Look at the board again and pick another.
 - **Skills do not appear**: restart the session after install, or run
   `/plugin list` to confirm `clio@df-os-skills` and `calliope@df-os-skills` are enabled.

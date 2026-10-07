@@ -32,9 +32,9 @@ Rules:
 - Every id must exist (an unknown id is refused). Get ids from `mine`, or
   from `board` → tasks on `currentSprint` with an empty `assignees` for
   the unclaimed ones.
-- Append-only, **last line wins**: changing your mind at 2pm is another
-  check-in, not an edit. An `off` followed by a check-in on tasks means the
-  day turned into a working day.
+- **One check-in a day, edited in place:** checking in again replaces it.
+  The same words again change nothing. An `off` followed by a check-in on
+  tasks means the day turned into a working day.
 - It is planning and presence, not proof. No done-test, no status.
 - Keep the member's own words. Confirm the line and the ids before sending —
   it is a signed commit.

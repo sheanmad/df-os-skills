@@ -16,8 +16,9 @@ Fields (all optional after the title): `project` (slug), `sprint` (id),
 (`task` or `question`).
 
 - The title names the result. "Poster public" beats "work on poster".
-- A task with no done-test cannot be finished, so ask for one when the work
-  is concrete enough to have it. A `question` unit is for open questions.
+- A done needs only the words, which become the receipt. A done-test is
+  optional; offer one when the work is concrete enough to have it. A
+  `question` unit is for open questions.
 - Work you take on yourself is born `self-added`; work minted for someone
   else is born `planned`. The gate decides from the assignee.
 - Confirm the title and fields before sending. Surface the returned id.
