@@ -8,7 +8,7 @@ app. They sign in the same way, at DF-OS, once for all of them.
 | Plugin | App | What it does |
 |---|---|---|
 | `clio` | https://clio.dflabs.id | the board: orient, check in, report, mint a task, edit one, note off-board work, set a project's focus |
-| `calliope` | https://calliope.dflabs.id | find pages, files and tasks; show the page tree; read a page or a recording's transcript; write a page, a sheet or a folder, a comment; edit, move, reorder, archive; upload a file; attach to a task |
+| `calliope` | https://calliope.dflabs.id | find pages, files and tasks; show the page tree; read a page or a recording's transcript; write a page, a sheet or a folder, a comment; edit, move, reorder, archive, delete to Trash and restore; upload a file; attach to a task |
 
 ## Install
 
@@ -134,6 +134,26 @@ too: a key, a password, an NIK, an NPWP or a bank account number in a save is
 refused and names the line; you can save anyway with a reason, which goes into
 the commit. What an AI wants to add on its own is not Calliope's business:
 that comes with the assistant and its own app.
+
+## How to release
+
+A change reaches people only once it is merged to `main`: the marketplace
+follows the repo's default branch, and `/plugin` updates from there. A branch,
+however finished, reaches no one.
+
+1. Bump `version` in the plugin's `.claude-plugin/plugin.json` (patch for a
+   skill or script fix, minor for a new command or field). Without a bump,
+   installed copies are not updated.
+2. Merge to `main` only after the apps it depends on are deployed (see DF-OS
+   `docs/SYSTEM.md` § How to deploy). A skill that sends a field or calls a
+   route the live app does not know yet is a skill that fails, or worse,
+   whose write is silently dropped.
+3. Members run `/plugin marketplace update df-os-skills` and restart the
+   session.
+
+For calliope 0.3.x (T-148: `layout`, `cols`, `choices`, `delete`, `restore`):
+merge only after the Metis and Calliope deploy. Old Metis drops `layout`,
+`cols` and `choices` from a save without saying so.
 
 ## Troubleshooting
 

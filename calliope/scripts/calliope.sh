@@ -18,11 +18,14 @@
 #   calliope.sh sheet   <title> [under=D-012] [field=value ...]   make a sheet: a page whose body is CSV (see the write skill)
 #       fields: body=<text> | body=@<file> | body=-  (stdin)   summary=<one line>   labels=a,b
 #               layout=<json> | layout=@<file.json> | layout=null   (a page's Page setup: paper, margins in mm, line, size, full; null clears it)
+#               cols=<json> | cols=@<file.json> | cols=null   (a sheet's column widths in px, {"<tab>":{"<column>":<px>}}; null clears them)
 #               attach=T-118 (a Clio task)   under=D-002 (the page or folder above it)
 #               reason=<why a blocked line may go in>
-#   calliope.sh edit    <id> [field=value ...]             change title, summary, labels, layout or body (same fields, note=<what changed>)
+#   calliope.sh edit    <id> [field=value ...]             change title, summary, labels, layout, cols or body (same fields, note=<what changed>)
 #   calliope.sh move    <id> [under=D-002|top] [after=D-013|before=D-013|first]   where a page sits, and its place among its siblings
 #   calliope.sh archive <id>                               put a page away
+#   calliope.sh delete  <id>                               to Trash, with every page under it and the files uploaded on them (never erased)
+#   calliope.sh restore <id>                               back from Trash, with everything that went with it
 #   calliope.sh upload  <file> [attach=T-118|D-012] [home=<slug>] [title=...]   add a file (M-); home is needed unless attach=D-...
 #   calliope.sh comments <id>                              the threads on a page
 #   calliope.sh comment <id> <text>  |  reply <C-id> <text>  |  resolve <C-id>
@@ -137,8 +140,8 @@ fields() {
       labels) parts+=("labels=$(python3 -c 'import json,sys; print(json.dumps([x.strip() for x in sys.argv[1].split(",") if x.strip()]))' "$v")"); continue ;;
       folder|sheet) case "$v" in true|yes|1|"$k") parts+=("$k=true") ;; *) parts+=("$k=false") ;; esac; continue ;;
       reason) parts+=("override=$(jobj "reason=$(jenc "$v")")"); continue ;;
-      layout) case "$v" in @*) v="$(cat "${v#@}")";; esac
-              parts+=("layout=$v"); continue ;;
+      layout|cols) case "$v" in @*) v="$(cat "${v#@}")";; esac
+              parts+=("$k=$v"); continue ;;
     esac
     parts+=("$k=$(jenc "$v")")
   done
@@ -148,10 +151,13 @@ rev_of() { local out; out="$(call GET "/api/things/$1")" || { echo "$out" >&2; e
 merge() { python3 -c 'import json,sys; a=json.loads(sys.argv[1]); a.update(json.loads(sys.argv[2])); print(json.dumps(a))' "$1" "$2"; }
 
 cmd="${1:-me}"; shift || true
-# A layout= that is not JSON stops here, before anything is sent (fields() runs in a subshell).
+# A layout= or cols= that is not JSON stops here, before anything is sent (fields() runs in a subshell).
 for a in "$@"; do case "$a" in layout=*)
   v="${a#layout=}"; case "$v" in @*) v="$(cat "${v#@}")";; esac
   python3 -c 'import json,sys; json.loads(sys.argv[1])' "$v" 2>/dev/null || { echo 'layout must be JSON, for example {"paper":"a4","margins":{"t":25.4,"r":25.4,"b":25.4,"l":25.4},"line":1.15,"size":15,"full":false}' >&2; exit 2; } ;;
+  cols=*)
+  v="${a#cols=}"; case "$v" in @*) v="$(cat "${v#@}")";; esac
+  python3 -c 'import json,sys; json.loads(sys.argv[1])' "$v" 2>/dev/null || { echo 'cols must be JSON, for example {"Sheet1":{"0":180,"2":96}}' >&2; exit 2; } ;;
 esac; done
 case "$cmd" in
   me)       ensure_auth; call GET /api/me ;;
@@ -202,6 +208,10 @@ walk("",0,set())
             esac; done
             call PUT "/api/items/$id/move" "$body" ;;
   archive)  ensure_auth; call POST "/api/items/$(upper "$1")/cold" '{}' ;;
+  delete)   ensure_auth; [ $# -gt 0 ] || { echo "usage: delete <id>" >&2; exit 2; }
+            call POST "/api/items/$(upper "$1")/trash" '{}' ;;
+  restore)  ensure_auth; [ $# -gt 0 ] || { echo "usage: restore <id>" >&2; exit 2; }
+            call POST "/api/items/$(upper "$1")/restore" '{}' ;;
   upload)   ensure_auth
             [ $# -gt 0 ] || { echo "usage: upload <file> [attach=T-118|D-012] [home=<slug>] [title=...]" >&2; exit 2; }
             file="$1"; shift
@@ -225,7 +235,7 @@ print(urllib.parse.urlencode({k:v for k,v in zip(("home","title","name","attachT
   resolve)  ensure_auth; call POST "/api/comments/$(upper "$1")/resolve" '{}' ;;
   edit)     ensure_auth
             id="$(upper "$1")"; shift
-            [ $# -gt 0 ] || { echo "usage: edit <id> field=value ...  (title|summary|labels|layout|body|note|reason)" >&2; exit 2; }
+            [ $# -gt 0 ] || { echo "usage: edit <id> field=value ...  (title|summary|labels|layout|cols|body|note|reason)" >&2; exit 2; }
             rev="$(rev_of "$id")"
             call PUT "/api/items/$id" "$(merge "$(fields "$@")" "$(jobj "rev=$(jenc "$rev")")")" ;;
   attach)   ensure_auth; call POST /api/links/attach "$(jobj "target=$(jenc "$(upper "$1")")" "item=$(jenc "$(upper "$2")")")" ;;

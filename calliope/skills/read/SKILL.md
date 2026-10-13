@@ -20,6 +20,16 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/calliope.sh" links T-118       # what hangs 
   exists. A task (`T-`) reads as its file: brief, done-test, trail.
 - A sheet (`sheet: true` on its card) reads as CSV; with more than one tab,
   each tab is a `## <Tab>` section with a fenced `csv` block.
+- A page body is Markdown plus the editor's forms: `<div align="center">`
+  (or `right`, `justify`) blocks around paragraphs or headings, and
+  `<span style="…">` around words for a colour (`color`), a highlight
+  (`background-color`), a size (`font-size`) or a font (`font-family`). Read
+  the words through them; quote without the tags unless the styling matters.
+- The card may carry `layout`, a page's Page setup (paper, margins in mm,
+  line, size, full width); none means the default, full width. A sheet's card
+  may carry `cols` (column widths in px, by tab and column index, A is 0) and
+  `choices` (a column's fixed list of values, by tab and column index).
+- A page with status `deleted` is in Trash.
 - A page with status `cold` is archived and lives in Drive; `read` still
   returns it.
 - Quote what matters, in order; never paste the whole thing back.

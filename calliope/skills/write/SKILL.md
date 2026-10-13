@@ -1,6 +1,6 @@
 ---
 name: write
-description: Write to the DF Labs brain through Calliope as the member — write a page, a sheet or a folder at the top or under a page, edit, move, reorder, comment, archive; add a file. Use when the member says "save this as a page", "write this up on T-118", "catat ini", "update D-012", "put it under Clients", "move it to the top", "put it before D-013", "make a sheet of this table", "archive D-012", "comment on D-012". Every save is a signed commit, them via calliope.
+description: Write to the DF Labs brain through Calliope as the member — write a page, a sheet or a folder at the top or under a page, edit, move, reorder, comment, archive, delete to Trash and restore; add a file. Use when the member says "save this as a page", "write this up on T-118", "catat ini", "update D-012", "put it under Clients", "move it to the top", "put it before D-013", "make a sheet of this table", "archive D-012", "delete D-012", "bring D-012 back", "comment on D-012". Every save is a signed commit, them via calliope.
 ---
 
 # Write a page, a sheet or a folder
@@ -19,6 +19,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/calliope.sh" edit D-012 summary="…" body=@
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/calliope.sh" move D-012 under=D-003                                        # under a page or folder; under=top for the top
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/calliope.sh" move D-012 after=D-013                                        # order among siblings: after=, before=, or first
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/calliope.sh" archive D-012
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/calliope.sh" delete D-012                                                  # to Trash, with what is under it
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/calliope.sh" restore D-012                                                 # back from Trash
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/calliope.sh" upload ./kickoff.m4a attach=D-012                             # a file; home comes from the page
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/calliope.sh" upload ./logo.png home=northwind title="Northwind logo"           # without attach=D-…, home= is needed
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/calliope.sh" comments D-012                                                # the threads on a page
@@ -74,12 +76,19 @@ line, at most 50 a column, each once; a cell may still hold another value, so
 writing the CSV never needs to match the list. A column put in or taken out
 does not move the choices: set them again on the new column.
 
+A sheet's column widths are on its card as `cols`, by tab name and column
+index, in px: `cols: {"Sheet1":{"0":180,"2":96}}`. Save them with
+`edit D-… cols='{"Sheet1":{"0":180,"2":96}}'` (send every tab's widths; it
+replaces them) or `cols=null` to clear them. Do not use
+`POST /api/sheet/D-…/cols`: it only shows widths to people who have the sheet
+open now, answers 409 `not here` to anyone who has not, and keeps nothing.
+
 A page's Page setup (how it is drawn and how it prints to PDF) is `layout=`:
 `paper` (`a4` or `letter`), `margins` in mm (`t r b l`), `line` (1, 1.15, 1.5
 or 2), `size` in px, a whole number from 10 to 24, `full` (true = full
 width, no paper). Send all of it:
 `edit D-… layout='{"paper":"a4","margins":{"t":25.4,"r":25.4,"b":25.4,"l":25.4},"line":1.15,"size":15,"full":false}'`.
-`edit D-… layout=null` clears it (the page goes back to the default).
+`edit D-… layout=null` clears it (the page goes back to the default, full width).
 Pages only; not sheets or folders.
 
 - Confirm title, summary and where it goes (`tree` shows the tree) with the
@@ -98,6 +107,15 @@ Pages only; not sheets or folders.
   or work around it. Tell the member who has unsaved changes, and that they
   (or that person) must Save or Discard in Calliope first; send again only
   after they say so.
+- `delete` moves an item to Trash, never erases it: a page goes with every
+  page under it and the files uploaded on them, and its unsaved live changes
+  in Calliope go too. Before sending, name what goes (`tree`) and get a plain
+  yes from the member. `restore` brings back everything that went with it; if
+  its parent page is in Trash too, restore the parent first. Erasing for good
+  is an admin's, in Calliope, never from here.
+- Several at once: one `delete` per item, in a loop, after one yes for the
+  whole list (there is no multi-delete call). Deleting a parent already takes
+  its children; do not send them again.
 - The script exits 1 on any 4xx or 5xx and prints the server's error: read
   it, never report a refused save as done.
 
