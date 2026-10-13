@@ -138,7 +138,6 @@ fields() {
       folder|sheet) case "$v" in true|yes|1|"$k") parts+=("$k=true") ;; *) parts+=("$k=false") ;; esac; continue ;;
       reason) parts+=("override=$(jobj "reason=$(jenc "$v")")"); continue ;;
       layout) case "$v" in @*) v="$(cat "${v#@}")";; esac
-              python3 -c 'import json,sys; json.loads(sys.argv[1])' "$v" 2>/dev/null || { echo "layout must be JSON, for example {\"paper\":\"a4\",\"margins\":{\"t\":25.4,\"r\":25.4,\"b\":25.4,\"l\":25.4},\"line\":1.15,\"size\":15,\"full\":false}" >&2; exit 2; }
               parts+=("layout=$v"); continue ;;
     esac
     parts+=("$k=$(jenc "$v")")
@@ -149,6 +148,11 @@ rev_of() { local out; out="$(call GET "/api/things/$1")" || { echo "$out" >&2; e
 merge() { python3 -c 'import json,sys; a=json.loads(sys.argv[1]); a.update(json.loads(sys.argv[2])); print(json.dumps(a))' "$1" "$2"; }
 
 cmd="${1:-me}"; shift || true
+# A layout= that is not JSON stops here, before anything is sent (fields() runs in a subshell).
+for a in "$@"; do case "$a" in layout=*)
+  v="${a#layout=}"; case "$v" in @*) v="$(cat "${v#@}")";; esac
+  python3 -c 'import json,sys; json.loads(sys.argv[1])' "$v" 2>/dev/null || { echo 'layout must be JSON, for example {"paper":"a4","margins":{"t":25.4,"r":25.4,"b":25.4,"l":25.4},"line":1.15,"size":15,"full":false}' >&2; exit 2; } ;;
+esac; done
 case "$cmd" in
   me)       ensure_auth; call GET /api/me ;;
   find)     ensure_auth; call GET "/api/find?q=$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(" ".join(sys.argv[1:])))' "$@")&limit=20" ;;
