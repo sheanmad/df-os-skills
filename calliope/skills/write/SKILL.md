@@ -34,7 +34,9 @@ words), `attach=T-118` (also hangs it on the task), `under=D-003` (the page
 or folder it sits under; leave it out for the top). Markdown in the body; the
 editor's forms work too: `> [!INFO]` panels, `[status: Done | green]`, tables,
 `<details>`, and `<div align="center">` (a blank line, the words, a blank line,
-`</div>`) to centre, right-align or justify a paragraph or heading. `edit` takes `note=` (what changed, kept in the history).
+`</div>`) to centre, right-align or justify a paragraph or heading.
+`<span style="color:#c0392b">words</span>` gives words a colour, a highlight
+(`background-color`), a size (`font-size:18px`) or a font (`font-family:Georgia, serif`). `edit` takes `note=` (what changed, kept in the history).
 
 A sheet is a page whose body is CSV (made with `sheet`, or `sheet=true` on
 `page`). One tab named Sheet1 is plain CSV, one line a row. More tabs: one
