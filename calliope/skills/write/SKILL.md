@@ -62,6 +62,18 @@ A cell starting with `=` is a formula and may point at another tab
 (`Costs!B2`, `'Budget 2026'!A1:B5`). `edit D-… body=@new.csv` replaces the
 whole sheet; read it first and send every tab back.
 
+A sheet's column can have a fixed list of choices (a Status: Lead, Contacted,
+Won, Lost); Calliope shows a picker for its cells. They are on the sheet's card
+as `choices`, by tab name and column index (A is 0), shown by `card D-…`:
+`choices: {"Sheet1":{"4":["Lead","Contacted","Won","Lost"]}}`. Set or clear
+one column through Calliope, which saves the card and tells everyone with the
+sheet open:
+`raw POST /api/sheet/D-…/choices '{"tab":"Sheet1","col":4,"list":["Lead","Contacted","Won","Lost"]}'`
+(`"list":null` clears that column). Each choice is 1 to 100 characters on one
+line, at most 50 a column, each once; a cell may still hold another value, so
+writing the CSV never needs to match the list. A column put in or taken out
+does not move the choices: set them again on the new column.
+
 A page's Page setup (how it is drawn and how it prints to PDF) is `layout=`:
 `paper` (`a4` or `letter`), `margins` in mm (`t r b l`), `line` (1, 1.15, 1.5
 or 2), `size` in px, a whole number from 10 to 24, `full` (true = full
