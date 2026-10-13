@@ -2,7 +2,7 @@
   "name": "calliope",
   "displayName": "Calliope",
   "description": "Read and write the DF Labs docs app (Calliope) from any Claude Code session: find pages, files and tasks, read a page or a recording's transcript, write a page, a sheet or a folder, attach it to a task. Every save is a signed commit, you via calliope.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": { "name": "DF Labs" },
   "homepage": "https://github.com/sheanmad/df-os-skills",
   "repository": "https://github.com/sheanmad/df-os-skills",

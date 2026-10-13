@@ -61,8 +61,10 @@ whole sheet; read it first and send every tab back.
 
 A page's Page setup (how it is drawn and how it prints to PDF) is `layout=`:
 `paper` (`a4` or `letter`), `margins` in mm (`t r b l`), `line` (1, 1.15, 1.5
-or 2), `size` in px, `full` (true = full width, no paper). Send all of it:
+or 2), `size` in px, a whole number from 10 to 24, `full` (true = full
+width, no paper). Send all of it:
 `edit D-… layout='{"paper":"a4","margins":{"t":25.4,"r":25.4,"b":25.4,"l":25.4},"line":1.15,"size":15,"full":false}'`.
+`edit D-… layout=null` clears it (the page goes back to the default).
 Pages only; not sheets or folders.
 
 - Confirm title, summary and where it goes (`tree` shows the tree) with the

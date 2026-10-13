@@ -17,10 +17,10 @@
 #   calliope.sh folder  <name> [under=D-012]               make a folder, at the top or under a page or folder
 #   calliope.sh sheet   <title> [under=D-012] [field=value ...]   make a sheet: a page whose body is CSV (see the write skill)
 #       fields: body=<text> | body=@<file> | body=-  (stdin)   summary=<one line>   labels=a,b
-#               layout=<json> | layout=@<file.json>   (a page's Page setup: paper, margins in mm, line, size, full)
+#               layout=<json> | layout=@<file.json> | layout=null   (a page's Page setup: paper, margins in mm, line, size, full; null clears it)
 #               attach=T-118 (a Clio task)   under=D-002 (the page or folder above it)
 #               reason=<why a blocked line may go in>
-#   calliope.sh edit    <id> [field=value ...]             change title, summary, labels or body (same fields, note=<what changed>)
+#   calliope.sh edit    <id> [field=value ...]             change title, summary, labels, layout or body (same fields, note=<what changed>)
 #   calliope.sh move    <id> [under=D-002|top] [after=D-013|before=D-013|first]   where a page sits, and its place among its siblings
 #   calliope.sh archive <id>                               put a page away
 #   calliope.sh upload  <file> [attach=T-118|D-012] [home=<slug>] [title=...]   add a file (M-); home is needed unless attach=D-...
@@ -225,7 +225,7 @@ print(urllib.parse.urlencode({k:v for k,v in zip(("home","title","name","attachT
   resolve)  ensure_auth; call POST "/api/comments/$(upper "$1")/resolve" '{}' ;;
   edit)     ensure_auth
             id="$(upper "$1")"; shift
-            [ $# -gt 0 ] || { echo "usage: edit <id> field=value ...  (title|summary|body|reason)" >&2; exit 2; }
+            [ $# -gt 0 ] || { echo "usage: edit <id> field=value ...  (title|summary|labels|layout|body|note|reason)" >&2; exit 2; }
             rev="$(rev_of "$id")"
             call PUT "/api/items/$id" "$(merge "$(fields "$@")" "$(jobj "rev=$(jenc "$rev")")")" ;;
   attach)   ensure_auth; call POST /api/links/attach "$(jobj "target=$(jenc "$(upper "$1")")" "item=$(jenc "$(upper "$2")")")" ;;
