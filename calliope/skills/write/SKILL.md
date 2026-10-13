@@ -59,6 +59,12 @@ A cell starting with `=` is a formula and may point at another tab
 (`Costs!B2`, `'Budget 2026'!A1:B5`). `edit D-… body=@new.csv` replaces the
 whole sheet; read it first and send every tab back.
 
+A page's Page setup (how it is drawn and how it prints to PDF) is `layout=`:
+`paper` (`a4` or `letter`), `margins` in mm (`t r b l`), `line` (1, 1.15, 1.5
+or 2), `size` in px, `full` (true = full width, no paper). Send all of it:
+`edit D-… layout='{"paper":"a4","margins":{"t":25.4,"r":25.4,"b":25.4,"l":25.4},"line":1.15,"size":15,"full":false}'`.
+Pages only; not sheets or folders.
+
 - Confirm title, summary and where it goes (`tree` shows the tree) with the
   member before sending; surface the returned `id` and `commit`.
 - A refusal (422) names a line that looks like a key, a password, an NIK, an

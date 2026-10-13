@@ -17,6 +17,7 @@
 #   calliope.sh folder  <name> [under=D-012]               make a folder, at the top or under a page or folder
 #   calliope.sh sheet   <title> [under=D-012] [field=value ...]   make a sheet: a page whose body is CSV (see the write skill)
 #       fields: body=<text> | body=@<file> | body=-  (stdin)   summary=<one line>   labels=a,b
+#               layout=<json> | layout=@<file.json>   (a page's Page setup: paper, margins in mm, line, size, full)
 #               attach=T-118 (a Clio task)   under=D-002 (the page or folder above it)
 #               reason=<why a blocked line may go in>
 #   calliope.sh edit    <id> [field=value ...]             change title, summary, labels or body (same fields, note=<what changed>)
@@ -136,6 +137,9 @@ fields() {
       labels) parts+=("labels=$(python3 -c 'import json,sys; print(json.dumps([x.strip() for x in sys.argv[1].split(",") if x.strip()]))' "$v")"); continue ;;
       folder|sheet) case "$v" in true|yes|1|"$k") parts+=("$k=true") ;; *) parts+=("$k=false") ;; esac; continue ;;
       reason) parts+=("override=$(jobj "reason=$(jenc "$v")")"); continue ;;
+      layout) case "$v" in @*) v="$(cat "${v#@}")";; esac
+              python3 -c 'import json,sys; json.loads(sys.argv[1])' "$v" 2>/dev/null || { echo "layout must be JSON, for example {\"paper\":\"a4\",\"margins\":{\"t\":25.4,\"r\":25.4,\"b\":25.4,\"l\":25.4},\"line\":1.15,\"size\":15,\"full\":false}" >&2; exit 2; }
+              parts+=("layout=$v"); continue ;;
     esac
     parts+=("$k=$(jenc "$v")")
   done
