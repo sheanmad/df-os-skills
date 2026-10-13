@@ -9,12 +9,13 @@
 # Usage:
 #   calliope.sh me                                         who you are
 #   calliope.sh find    <words>                            search the brain: ids, titles, text
-#   calliope.sh tree                                       the page tree as indented text (folders end in /)
+#   calliope.sh tree                                       the page tree as indented text (folders end in /, sheets in [sheet])
 #   calliope.sh card    <id>                               one item's card and links (D-, M-, T-)
 #   calliope.sh read    <id> [page]                        its words, 16,000 characters a page
 #   calliope.sh links   <id>                               what it is attached to, and what hangs on it
 #   calliope.sh page    <title> [under=D-012] [field=value ...]   write a page, at the top or under a page or folder
 #   calliope.sh folder  <name> [under=D-012]               make a folder, at the top or under a page or folder
+#   calliope.sh sheet   <title> [under=D-012] [field=value ...]   make a sheet: a page whose body is CSV (see the write skill)
 #       fields: body=<text> | body=@<file> | body=-  (stdin)   summary=<one line>   labels=a,b
 #               attach=T-118 (a Clio task)   under=D-002 (the page or folder above it)
 #               reason=<why a blocked line may go in>
@@ -26,6 +27,9 @@
 #   calliope.sh comment <id> <text>  |  reply <C-id> <text>  |  resolve <C-id>
 #   calliope.sh attach  <T-id> <item>  |  detach <T-id> <item>
 #   calliope.sh raw     <METHOD> <path> [jsonBody]         escape hatch
+#
+# The server's answer is printed as it came. On a 4xx or 5xx it is still
+# printed (the error says why), and the command exits 1. Usage errors exit 2.
 #
 # Config: ~/.config/dfos/ (see the sign-in block); Calliope's address in its file `calliope`.
 set -euo pipefail
@@ -105,6 +109,15 @@ ensure_auth() {
 }
 # ---- END DF-OS sign-in ----
 
+# A call whose HTTP status counts: the answer is printed whole, and a 4xx or
+# 5xx makes it fail (status 1) after printing the server's error.
+answer() { # "<body>\n<status>"
+  local code="${1##*$'\n'}"
+  printf '%s' "${1%$'\n'*}"
+  case "$code" in [45][0-9][0-9]) echo; return 1 ;; esac
+}
+call() { local out; out="$(CURL+=(-w $'\n%{http_code}'); req "$@")"; answer "$out"; }
+
 jget() { python3 -c 'import json,sys; v=json.load(sys.stdin)
 for k in sys.argv[1].split("."): v=v[k]
 print(v if not isinstance(v,(dict,list)) else json.dumps(v))' "$1"; }
@@ -121,24 +134,26 @@ fields() {
       attach) k=attachTo ;;
       under) k=part_of; v="$(upper "$v")" ;;
       labels) parts+=("labels=$(python3 -c 'import json,sys; print(json.dumps([x.strip() for x in sys.argv[1].split(",") if x.strip()]))' "$v")"); continue ;;
-      folder) parts+=("folder=true"); continue ;;
+      folder|sheet) case "$v" in true|yes|1|"$k") parts+=("$k=true") ;; *) parts+=("$k=false") ;; esac; continue ;;
       reason) parts+=("override=$(jobj "reason=$(jenc "$v")")"); continue ;;
     esac
     parts+=("$k=$(jenc "$v")")
   done
-  jobj "${parts[@]}"
+  jobj ${parts[@]+"${parts[@]}"}   # (bash 3.2: an empty array is unset under set -u)
 }
-rev_of() { req GET "/api/things/$1" | jget rev; }
+rev_of() { local out; out="$(call GET "/api/things/$1")" || { echo "$out" >&2; exit 1; }; echo "$out" | jget rev; }
 merge() { python3 -c 'import json,sys; a=json.loads(sys.argv[1]); a.update(json.loads(sys.argv[2])); print(json.dumps(a))' "$1" "$2"; }
 
 cmd="${1:-me}"; shift || true
 case "$cmd" in
-  me)       ensure_auth; req GET /api/me ;;
-  find)     ensure_auth; req GET "/api/find?q=$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(" ".join(sys.argv[1:])))' "$@")&limit=20" ;;
-  card)     ensure_auth; req GET "/api/things/$(upper "$1")" ;;
-  read)     ensure_auth; req GET "/api/read/$(upper "$1")?page=${2:-1}" ;;
-  links)    ensure_auth; req GET "/api/links-of/$(upper "$1")" ;;
-  tree)     ensure_auth; req GET /api/pages | python3 -c '
+  me)       ensure_auth; call GET /api/me ;;
+  find)     ensure_auth; call GET "/api/find?q=$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(" ".join(sys.argv[1:])))' "$@")&limit=20" ;;
+  card)     ensure_auth; call GET "/api/things/$(upper "$1")" ;;
+  read)     ensure_auth; call GET "/api/read/$(upper "$1")?page=${2:-1}" ;;
+  links)    ensure_auth; call GET "/api/links-of/$(upper "$1")" ;;
+  tree)     ensure_auth
+            out="$(call GET /api/pages)" || { echo "$out"; exit 1; }
+            echo "$out" | python3 -c '
 import json,sys
 cards=json.load(sys.stdin).get("pages",[])
 kids={}
@@ -150,21 +165,26 @@ def key(c): return (c.get("order") if c.get("order") is not None else 1e18, (c.g
 def walk(pid,depth,seen):
     for c in sorted(kids.get(pid,[]),key=key):
         if c["id"] in seen: continue
-        print("  "*depth+c["id"]+"  "+(c.get("title") or "")+("/" if c.get("folder") else ""))
+        print("  "*depth+c["id"]+"  "+(c.get("title") or "")+("/" if c.get("folder") else "  [sheet]" if c.get("sheet") else ""))
         walk(c["id"],depth+1,seen|{c["id"]})
 walk("",0,set())
 ' ;;
   page)     ensure_auth
             [ $# -gt 0 ] || { echo "usage: page <title> [under=D-012] [field=value ...]" >&2; exit 2; }
             title="$1"; shift
-            req POST /api/items "$(merge "$(fields "$@")" "$(jobj "title=$(jenc "$title")")")" ;;
+            call POST /api/items "$(merge "$(fields "$@")" "$(jobj "title=$(jenc "$title")")")" ;;
   folder)   ensure_auth
             [ $# -gt 0 ] || { echo "usage: folder <name> [under=D-012]" >&2; exit 2; }
             name="$1"; shift
-            req POST /api/items "$(merge "$(fields "$@")" "$(jobj "title=$(jenc "$name")" "folder=true")")" ;;
+            call POST /api/items "$(merge "$(fields "$@")" "$(jobj "title=$(jenc "$name")" "folder=true")")" ;;
+  sheet)    ensure_auth
+            [ $# -gt 0 ] || { echo "usage: sheet <title> [under=D-012] [body=@file.csv] [field=value ...]" >&2; exit 2; }
+            title="$1"; shift
+            call POST /api/items "$(merge "$(merge '{"body":""}' "$(fields "$@")")" "$(jobj "title=$(jenc "$title")" "sheet=true")")" ;;
   move)     ensure_auth
             id="$(upper "$1")"; shift
-            body="$(jobj "rev=$(jenc "$(rev_of "$id")")")"
+            rev="$(rev_of "$id")"
+            body="$(jobj "rev=$(jenc "$rev")")"
             for kv in "$@"; do case "$kv" in
               under=top) body="$(merge "$body" '{"part_of":null}')" ;;
               under=*)   body="$(merge "$body" "$(jobj "part_of=$(jenc "$(upper "${kv#*=}")")")")" ;;
@@ -172,8 +192,8 @@ walk("",0,set())
               before=*)  body="$(merge "$body" "$(jobj "before=$(jenc "$(upper "${kv#*=}")")")")" ;;
               first)     body="$(merge "$body" '{"first":true}')" ;;
             esac; done
-            req PUT "/api/items/$id/move" "$body" ;;
-  archive)  ensure_auth; req POST "/api/items/$(upper "$1")/cold" '{}' ;;
+            call PUT "/api/items/$id/move" "$body" ;;
+  archive)  ensure_auth; call POST "/api/items/$(upper "$1")/cold" '{}' ;;
   upload)   ensure_auth
             [ $# -gt 0 ] || { echo "usage: upload <file> [attach=T-118|D-012] [home=<slug>] [title=...]" >&2; exit 2; }
             file="$1"; shift
@@ -190,18 +210,19 @@ walk("",0,set())
 a=sys.argv[1:]
 print(urllib.parse.urlencode({k:v for k,v in zip(("home","title","name","attachTo"),a) if v}))' "$home" "$utitle" "$(basename "$file")" "$attach")"
             if [ -n "$TOKEN" ]; then auth=(-H "Authorization: Bearer $TOKEN"); else auth=(-b "$JAR"); fi
-            "${CURL[@]}" "${auth[@]}" -X POST "$URL/api/media?$q" -H "Content-Type: $ctype" --data-binary "@$file" ;;
-  comments) ensure_auth; req GET "/api/comments/$(upper "$1")" ;;
-  comment)  ensure_auth; id="$(upper "$1")"; shift; req POST /api/comments "$(jobj "on=$(jenc "$id")" "text=$(jenc "$*")")" ;;
-  reply)    ensure_auth; id="$(upper "$1")"; shift; req POST "/api/comments/$id/reply" "$(jobj "text=$(jenc "$*")")" ;;
-  resolve)  ensure_auth; req POST "/api/comments/$(upper "$1")/resolve" '{}' ;;
+            answer "$("${CURL[@]}" "${auth[@]}" -w $'\n%{http_code}' -X POST "$URL/api/media?$q" -H "Content-Type: $ctype" --data-binary "@$file")" ;;
+  comments) ensure_auth; call GET "/api/comments/$(upper "$1")" ;;
+  comment)  ensure_auth; id="$(upper "$1")"; shift; call POST /api/comments "$(jobj "on=$(jenc "$id")" "text=$(jenc "$*")")" ;;
+  reply)    ensure_auth; id="$(upper "$1")"; shift; call POST "/api/comments/$id/reply" "$(jobj "text=$(jenc "$*")")" ;;
+  resolve)  ensure_auth; call POST "/api/comments/$(upper "$1")/resolve" '{}' ;;
   edit)     ensure_auth
             id="$(upper "$1")"; shift
             [ $# -gt 0 ] || { echo "usage: edit <id> field=value ...  (title|summary|body|reason)" >&2; exit 2; }
-            req PUT "/api/items/$id" "$(merge "$(fields "$@")" "$(jobj "rev=$(jenc "$(rev_of "$id")")")")" ;;
-  attach)   ensure_auth; req POST /api/links/attach "$(jobj "target=$(jenc "$(upper "$1")")" "item=$(jenc "$(upper "$2")")")" ;;
-  detach)   ensure_auth; req POST /api/links/detach "$(jobj "target=$(jenc "$(upper "$1")")" "item=$(jenc "$(upper "$2")")")" ;;
-  raw)      ensure_auth; req "$1" "$2" "${3:-}" ;;
+            rev="$(rev_of "$id")"
+            call PUT "/api/items/$id" "$(merge "$(fields "$@")" "$(jobj "rev=$(jenc "$rev")")")" ;;
+  attach)   ensure_auth; call POST /api/links/attach "$(jobj "target=$(jenc "$(upper "$1")")" "item=$(jenc "$(upper "$2")")")" ;;
+  detach)   ensure_auth; call POST /api/links/detach "$(jobj "target=$(jenc "$(upper "$1")")" "item=$(jenc "$(upper "$2")")")" ;;
+  raw)      ensure_auth; call "$1" "$2" "${3:-}" ;;
   *)        echo "unknown command: $cmd (see the header for usage)" >&2; exit 2 ;;
 esac
 echo

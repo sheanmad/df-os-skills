@@ -8,7 +8,7 @@
     {
       "name": "calliope",
       "source": "./calliope",
-      "description": "Calliope, the DF Labs docs app, from any Claude Code session: find, read, write pages and folders, attach to tasks."
+      "description": "Calliope, the DF Labs docs app, from any Claude Code session: find, read, write pages, sheets and folders, attach to tasks."
     },
     {
       "name": "clio",

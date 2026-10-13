@@ -8,7 +8,7 @@ app. They sign in the same way, at DF-OS, once for all of them.
 | Plugin | App | What it does |
 |---|---|---|
 | `clio` | https://clio.dflabs.id | the board: orient, check in, report, mint a task, edit one, note off-board work, set a project's focus |
-| `calliope` | https://calliope.dflabs.id | find pages, files and tasks; show the page tree; read a page or a recording's transcript; write a page or a folder, a comment; edit, move, reorder, archive; upload a file; attach to a task |
+| `calliope` | https://calliope.dflabs.id | find pages, files and tasks; show the page tree; read a page or a recording's transcript; write a page, a sheet or a folder, a comment; edit, move, reorder, archive; upload a file; attach to a task |
 
 ## Install
 

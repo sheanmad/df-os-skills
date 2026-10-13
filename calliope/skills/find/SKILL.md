@@ -1,6 +1,6 @@
 ---
 name: find
-description: Search the DF Labs brain through Calliope — pages, folders, recordings, tasks — by id, title or words, or show the page tree. Use when the member asks "where is the budget proposal", "cari dokumen tentang Northwind", "is there a recording of the kick-off", "find D-012", "show me the tree". Read-only; it points, it never guesses.
+description: Search the DF Labs brain through Calliope — pages, sheets, folders, recordings, tasks — by id, title or words, or show the page tree. Use when the member asks "where is the budget proposal", "cari dokumen tentang Northwind", "is there a recording of the kick-off", "find D-012", "show me the tree". Read-only; it points, it never guesses.
 ---
 
 # Find what is in the brain
@@ -17,7 +17,8 @@ in the question comes first; then titles; then words, including words that
 live in Drive (long bodies, transcripts).
 
 `tree` prints the page tree as indented text, one line per item: `D-012  Title`
-for a page, `D-003  Clients/` for a folder, children indented two spaces.
+for a page, `D-003  Clients/` for a folder, `D-020  Costs  [sheet]` for a
+sheet, children indented two spaces.
 
 - Show the top few as `id · kind · title (status)`; say what matched. Never
   dump raw JSON.

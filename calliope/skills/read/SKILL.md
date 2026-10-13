@@ -14,10 +14,12 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/calliope.sh" links T-118       # what hangs 
 
 - Card first when you only need what it is; `read` only when the
   words are needed. `read` says `page` of `pages`: read on only if asked.
-- Ids: `D-` is a page or a folder, `M-` a file or recording, `T-` a task
+- Ids: `D-` is a page, a sheet or a folder, `M-` a file or recording, `T-` a task
   (tasks belong to Clio), `C-` a comment.
 - A recording (`M-`) reads as its summary, then its transcript, when one
   exists. A task (`T-`) reads as its file: brief, done-test, trail.
+- A sheet (`sheet: true` on its card) reads as CSV; with more than one tab,
+  each tab is a `## <Tab>` section with a fenced `csv` block.
 - A page with status `cold` is archived and lives in Drive; `read` still
   returns it.
 - Quote what matters, in order; never paste the whole thing back.
