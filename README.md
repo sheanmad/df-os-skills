@@ -7,7 +7,7 @@ app. They sign in the same way, at DF-OS, once for all of them.
 
 | Plugin | App | What it does |
 |---|---|---|
-| `clio` | https://clio.dflabs.id | the board: orient, check in, report, mint a task, edit one, note off-board work, set a project's focus; from Clio T-158 release 1, due dates, domains and projects |
+| `clio` | https://clio.dflabs.id | the board: orient, check in, report, mint a task, edit one, note off-board work, set a project's focus; from Clio T-158 release 1, due dates, domains and projects; from Clio T-158 releases 2 and 3, the Timeline and check out |
 | `calliope` | https://calliope.dflabs.id | find pages, files and tasks; show the page tree; read a page or a recording's transcript; write a page, a sheet or a folder, a comment; edit, move, reorder, archive, delete to Trash and restore; upload a file; attach to a task |
 
 ## Install
@@ -93,6 +93,22 @@ edited. Your word is final; nobody approves it.
   did is reportable? Say so. The assistant drafts the line from what you
   discussed, shows it with the task, and sends only when you confirm.
 
+#### Check out — `/clio:checkout` (from Clio T-158 releases 2 and 3)
+
+The end of the day, like Home's Check out button. The assistant reads the
+day's tasks (due today or late, checked in on, also worked on), asks what
+happened on each, and sends it all as one commit: ordinary reports, moved
+dates with their reasons, and the check-out line in your day file.
+
+> "check out — T-152 is done, the feed reads Substack; T-135 moves to Friday, the client moved the call"
+
+- **A task due today or late needs Done or a new date.** A later date needs a
+  reason.
+- **Done and Dropped need words.** The assistant never invents them.
+- **A second check-out the same day** replaces the line, which names every
+  task you reported on today. Report words are permanent.
+- Report on a single task still works any time of day.
+
 #### Off the board — `/clio:note`
 
 Work you did that no task covers. It lands in your day file as a report with
@@ -109,6 +125,8 @@ minted.
 | `/clio:task` | "what happened on T-041" | One task in full, with its trail. Read-only. |
 | `/clio:new` | "new task: poster public" | Mint a task. Title names the result; add a done-test when the work is concrete. |
 | `/clio:edit` | "assign T-041 to budi", "move it to this sprint" | Properties: project, assignee, sprint, due date, done-test, title. Never status — that is a report. |
+| `/clio:checkout` | "check out", "wrap up my day" | The end of the day, like Home's Check out: words per task, Done or a moved date for late ones, one commit. From Clio T-158 releases 2 and 3. |
+| `/clio:timeline` | "show the timeline", "which projects are late" | Dated projects by domain with start, due, health and days late. Read-only. From Clio T-158 releases 2 and 3. |
 | `/clio:due` | "T-041 is due Friday", "push T-041 to next week" | Set or move a task's due date. A later date needs a reason. From Clio T-158 release 1. |
 | `/clio:domain` | "show the domains", "which project is late" | Every domain with its projects and their health; open a new domain (name, colour, description). From Clio T-158 release 1. |
 | `/clio:project` | "new project for the Calliope prototype" | Open a project in a domain with start, due date and goal; edit it. A later due date needs a reason. From Clio T-158 release 1. |
@@ -170,8 +188,13 @@ For clio 0.3.x (T-158 release 1: `due=`, `due`, `domain`, `project`): merge
 only after Clio's release 1 is deployed (Metis, Iris and Clio, in that order).
 Older Clio has no `/api/domains` and does not keep `due`.
 
+For clio 0.4.0 (T-158 releases 2 and 3: `checkout`, `timeline`): merge only
+after Clio's releases 2 and 3 are deployed. Older Clio has no
+`/api/checkout` or `/api/timeline`.
+
 ## Change log
 
+- 2026-10-20 — clio 0.4.0, from Clio T-158 releases 2 and 3: `checkout` (no args: `GET /api/checkout`, the three lists; with items: `POST /api/checkout`, one commit) and `timeline [from] [to] [domain=]` (`GET /api/timeline`, printed as projects with dates, health and late marks). Skills `checkout` and `timeline`; `report` and `checkin` say Home's end of the day is now Check out and Report on a task stays. Not on `main` until Clio's releases 2 and 3 are deployed.
 - 2026-10-20 — clio 0.3.2: `claim` sends `due` only when the task is live (todo or doing), undated and in the open week (read from `GET /api/sprints`); a date given for a task that already has one is ignored and the script says so; `archived` counts as not live. When the weeks cannot be read it still asks, "if its week is still open".
 - 2026-10-20 — clio 0.3.1: `claim <id> [YYYY-MM-DD]`: claiming a live task in a week with no due date needs the date, sent in the same PATCH (Clio refuses the claim without it); the script stops with a clear message when it is missing, and the checkin skill asks for it. `edit due=` with no value clears the date (`"due": null`).
 - 2026-10-20 — clio 0.3.0, from Clio T-158 release 1: `due=` on `new` and `edit`; `due T-NNN <date> ["reason"]` (PATCH `/api/tasks/:id`); `domain` (GET `/api/domains`) and `domain new` (POST `/api/domains`); `project new` with domain, start, due, goal and people (POST `/api/projects`) and `project edit` (PATCH `/api/projects/:slug`). Skills `due`, `domain`, `project`; the due-date rules and "Done, never Finished" in `new`, `edit`, `report` and the README. Not on `main` until Clio's release 1 is deployed.

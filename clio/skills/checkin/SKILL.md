@@ -44,6 +44,10 @@ Rules:
 - Keep the member's own words. Confirm the line and the ids before sending —
   it is a signed commit.
 
+**The day has two ends.** Check in says what the day is for; Check out
+(\`checkout\`) closes it with what happened. Home's buttons are Check in and
+Check out.
+
 **Not this skill:** "T-041 is done", "the deck is done", "moved it to
 doing" — that is progress on a task. Hand it to `report`.
 

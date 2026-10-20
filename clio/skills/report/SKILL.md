@@ -43,6 +43,11 @@ How to do it well:
 
 If the task id is unclear, run `mine` and let them pick.
 
+**Report or check out.** Report is for one task, any time of day: it stays on
+the task's row, in the drawer, and here. The end of the day is \`checkout\`
+(Home's Check out button): it asks about each of the day's tasks and sends
+those reports in one commit. Report words are permanent either way.
+
 **Not this skill:** "today I'm on T-041", "I'm off today" — that is attendance.
 Hand it to `checkin`.
 

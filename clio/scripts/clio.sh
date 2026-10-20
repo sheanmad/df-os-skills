@@ -23,6 +23,10 @@
 #   clio.sh domain  new <name> <colour> [text]      open a domain (colour: violet|orange|teal|pink|blue|olive|brown|green)
 #   clio.sh project new <name> field=value ...      open a project (domain|start|due|goal required; people|slug)
 #   clio.sh project edit <slug> field=value ...     project properties (name|start|due|goal|domain|people|status|reason)
+#   clio.sh checkout                                the end of your day: due today or late, checked in on, also worked on
+#   clio.sh checkout [day=<words>] <id> [words=<text>] [status=done|dropped|doing|todo] [due=<date> reason=<text>] <id> ...
+#                                                   check out: one commit (send alone, with no ids: `checkout send`)
+#   clio.sh timeline [from] [to] [domain=<slug>]    projects with their dates, health and late marks (dates YYYY-MM-DD)
 #   clio.sh raw     <METHOD> <path> [jsonBody]      escape hatch
 #
 # Config: ~/.config/dfos/ (see the sign-in block); Clio's address in its file `clio`.
@@ -216,6 +220,63 @@ print("need" if w and w[0].get("status")=="open" else "ok" if w else "maybe")' "
                    req PATCH "/api/projects/$slug" "$(jobj "${parts[@]}")" ;;
              *)    echo "usage: project new <name> field=value ... | project edit <slug> field=value ..." >&2; exit 2 ;;
            esac ;;
+  checkout)
+           if [ $# -eq 0 ]; then ensure_auth; req GET /api/checkout; echo; exit 0; fi
+           [ "$1" = send ] && shift
+           # Each id starts an item; the field=value pairs after it belong to it. day= is the line's own words.
+           body="$(python3 -c '
+import json,re,sys
+items,day,cur=[],None,None
+def die(m): sys.stderr.write(m+"\n"); sys.exit(2)
+for a in sys.argv[1:]:
+    if re.fullmatch(r"[A-Za-z]-\d+",a):
+        cur={"id":a.upper()}; items.append(cur); continue
+    k,eq,v=a.partition("=")
+    if not eq: die("not an id or field=value: "+a)
+    if k=="day": day=v; continue
+    if cur is None: die(k+"= comes after a task id (day= is the only field before one)")
+    if k not in ("words","status","due","reason"): die("unknown field: "+k+" (words|status|due|reason)")
+    if k=="status" and v not in ("todo","doing","done","dropped"): die("status is todo, doing, done or dropped")
+    if k=="due" and not re.fullmatch(r"\d{4}-\d{2}-\d{2}",v): die("not a date: "+v+" (use YYYY-MM-DD)")
+    cur[k]=v
+ids=[i["id"] for i in items]
+if len(ids)!=len(set(ids)): die("a task is named twice")
+for i in items:
+    if i.get("status") in ("done","dropped") and not i.get("words","").strip(): die(i["id"]+": "+i["status"]+" needs words")
+    if i.get("status") in ("done","dropped") and i.get("due"): die(i["id"]+": "+i["status"]+" takes no due date")
+    if i.get("reason") and not i.get("due"): die(i["id"]+": reason= goes with due=")
+o={"items":items}
+if day: o["words"]=day
+print(json.dumps(o))' "$@")" || exit 2
+           ensure_auth; req POST /api/checkout "$body" ;;
+  timeline)
+           q=()
+           for a in "$@"; do
+             case "$a" in
+               domain=*) q+=("domain=${a#domain=}") ;;
+               *) isdate "$a"; if [ ${#q[@]} -eq 0 ] || [[ "${q[0]}" != from=* ]]; then q=("from=$a" ${q[@]+"${q[@]}"}); else q+=("to=$a"); fi ;;
+             esac
+           done
+           qs="$(IFS='&'; echo "${q[*]+${q[*]}}")"
+           ensure_auth
+           req GET "/api/timeline${qs:+?$qs}" | python3 -c '
+import json,sys
+raw=sys.stdin.read()
+try: t=json.loads(raw)
+except Exception: print(raw); sys.exit()
+if "domains" not in t: print(raw); sys.exit()
+H={"on_track":"On track","on-track":"On track","at_risk":"At risk","at-risk":"At risk","late":"Late","done":"Done"}
+print("Timeline %s to %s (today %s)" % (t.get("from"),t.get("to"),t.get("today")))
+for d in t["domains"]:
+    print("\n"+d.get("name",d.get("slug","")))
+    if not d.get("projects"): print("  (no dated project in this window)")
+    for p in d.get("projects",[]):
+        h=p.get("health") or ""; h=H.get(h,h.replace("_"," ").capitalize())
+        late="  %d days late" % p["late"] if p.get("late") else ""
+        print("  %s  %s -> %s  %s  done %s, doing %s, of %s%s" % (p.get("name"),p.get("start"),p.get("due"),h,p.get("done",0),p.get("doing",0),p.get("total",0),late))
+        for k in p.get("tasks",[]):
+            if k.get("late"): print("    %s %s  due %s  %d days late (%s)" % (k["id"],k.get("title",""),k.get("due"),k["late"],", ".join(k.get("assignees") or []) or "nobody"))
+' ; exit 0 ;;
   raw)     ensure_auth; req "$1" "$2" "${3:-}" ;;
   *)       echo "unknown command: $cmd (see header for usage)" >&2; exit 2 ;;
 esac
