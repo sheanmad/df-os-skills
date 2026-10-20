@@ -172,6 +172,7 @@ Older Clio has no `/api/domains` and does not keep `due`.
 
 ## Change log
 
+- 2026-10-20 — clio 0.3.2: `claim` sends `due` only when the task is live (todo or doing), undated and in the open week (read from `GET /api/sprints`); a date given for a task that already has one is ignored and the script says so; `archived` counts as not live. When the weeks cannot be read it still asks, "if its week is still open".
 - 2026-10-20 — clio 0.3.1: `claim <id> [YYYY-MM-DD]`: claiming a live task in a week with no due date needs the date, sent in the same PATCH (Clio refuses the claim without it); the script stops with a clear message when it is missing, and the checkin skill asks for it. `edit due=` with no value clears the date (`"due": null`).
 - 2026-10-20 — clio 0.3.0, from Clio T-158 release 1: `due=` on `new` and `edit`; `due T-NNN <date> ["reason"]` (PATCH `/api/tasks/:id`); `domain` (GET `/api/domains`) and `domain new` (POST `/api/domains`); `project new` with domain, start, due, goal and people (POST `/api/projects`) and `project edit` (PATCH `/api/projects/:slug`). Skills `due`, `domain`, `project`; the due-date rules and "Done, never Finished" in `new`, `edit`, `report` and the README. Not on `main` until Clio's release 1 is deployed.
 

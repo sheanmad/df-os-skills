@@ -137,14 +137,35 @@ case "$cmd" in
            me="$(req GET /api/me | python3 -c 'import json,sys; print(json.load(sys.stdin)["slug"])')"
            id="$(echo "$1" | tr a-z A-Z)"; date="${2:-}"
            [ -n "$date" ] && isdate "$date"
-           # mine: already yours; due: in a week, live, with no due date (Clio refuses the claim without one)
-           state="$(req GET "/api/tasks/$id" | python3 -c 'import json,sys
-t=json.load(sys.stdin)
-if sys.argv[1] in (t.get("assignees") or []): print("mine")
-elif t.get("sprint") and not t.get("due") and t.get("status") not in ("done","dropped"): print("due")
-else: print("ok")' "$me" 2>/dev/null || echo ok)"
+           # The task as it stands: mine (already yours), dated:<date> (has a due date),
+           # need (live, in the open week, no due date: Clio refuses the claim without one),
+           # maybe (live, in a week, no due date, and the weeks could not be read), or ok.
+           task="$(req GET "/api/tasks/$id" 2>/dev/null || true)"
+           weeks=""
+           if printf '%s' "$task" | python3 -c 'import json,sys; t=json.load(sys.stdin); sys.exit(0 if t.get("sprint") and not t.get("due") else 1)' 2>/dev/null; then
+             weeks="$(req GET /api/sprints 2>/dev/null || true)"
+           fi
+           state="$(python3 -c 'import json,sys,datetime
+try: t=json.loads(sys.argv[2])
+except Exception: print("ok"); sys.exit()
+if sys.argv[1] in (t.get("assignees") or []): print("mine"); sys.exit()
+if t.get("due"):
+    try: d=datetime.date.fromisoformat(str(t["due"])[:10]).strftime("%a %-d %b")
+    except Exception: d=str(t["due"])
+    print("dated:"+d); sys.exit()
+if not t.get("sprint") or t.get("status") not in ("todo","doing"): print("ok"); sys.exit()
+try: ws=json.loads(sys.argv[3])["sprints"]
+except Exception: print("maybe"); sys.exit()
+w=[x for x in ws if x.get("id")==t["sprint"]]
+print("need" if w and w[0].get("status")=="open" else "ok" if w else "maybe")' "$me" "$task" "$weeks")"
            [ "$state" = mine ] && { echo "$id is already yours."; exit 0; }
-           [ "$state" = due ] && [ -z "$date" ] && { echo "$id is in a week and has no due date: claim it with one, e.g. claim $id 2026-10-30" >&2; exit 2; }
+           case "$state" in
+             dated:*) [ -n "$date" ] && echo "$id already has a due date (${state#dated:}); claimed without changing it." >&2
+                      date="" ;;
+             need)    [ -z "$date" ] && { echo "$id is in the open week and has no due date: claim it with one, e.g. claim $id 2026-10-30" >&2; exit 2; } ;;
+             maybe)   [ -z "$date" ] && { echo "$id has no due date: if its week is still open, claim it with one, e.g. claim $id 2026-10-30" >&2; exit 2; } ;;
+             *)       date="" ;;
+           esac
            parts=("assignee=$(jenc "$me")" 'expect={"assignee":""}')
            [ -n "$date" ] && parts+=("due=$(jenc "$date")")
            # refused (409) if someone took it since you looked, as in the web face
