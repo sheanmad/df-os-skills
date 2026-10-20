@@ -25,6 +25,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" off "sick, back tomorrow"
 # take an unclaimed task from this week's sprint (puts your name on it),
 # then check in on it
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" claim T-055
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" claim T-055 2026-10-30   # when it has no due date
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" checkin "taking the poster" T-055
 ```
 
@@ -35,6 +36,9 @@ Rules:
 - **One check-in a day, edited in place:** checking in again replaces it.
   The same words again change nothing. An `off` followed by a check-in on
   tasks means the day turned into a working day.
+- **Claiming a task in a week that has no due date needs one.** Ask the
+  member when it will be done and pass the date (`YYYY-MM-DD`) to `claim`;
+  without it the script stops and says so. Never pick a date for them.
 - It is planning and presence, not proof. No done-test, no status.
 - Keep the member's own words. Confirm the line and the ids before sending —
   it is a signed commit.

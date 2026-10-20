@@ -18,7 +18,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" edit T-041 title="<new title>" brie
   `due` (`YYYY-MM-DD`), `reason`.
 - **A task in a week needs a due date.** Saving a task in a week without one is
   refused; give `due=` in the same edit. Moving a due date later needs
-  `reason=`; the `due` skill is the plain way to do it.
+  `reason=`; the `due` skill is the plain way to do it. `due=` with nothing
+  after it clears the date (a backlog task only: a task in a week needs one).
 - **Status is refused here.** Moving a task is a report, because every move on
   this board carries the words that justify it — use `report`.
 - Putting your own name on an unclaimed task is `claim` in `checkin`.

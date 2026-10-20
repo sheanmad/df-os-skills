@@ -12,7 +12,7 @@
 #   clio.sh task    <id>                            one task, with its trail
 #   clio.sh checkin <text> [id,id,...]              check in: what you're on today
 #   clio.sh off     [text]                          check in as off today
-#   clio.sh claim   <id>                            put your name on an unclaimed task
+#   clio.sh claim   <id> [YYYY-MM-DD]               put your name on an unclaimed task (the date when it is in a week with none)
 #   clio.sh report  <id> <text> [status] [doneTest] the verb (status: done|dropped|doing|todo)
 #   clio.sh note    <text>                          off-board report → your day file
 #   clio.sh new     <title> [field=value ...]       mint a task (project|sprint|assignee|doneTest|brief|unit|due)
@@ -115,7 +115,7 @@ fields() {
   for kv in "$@"; do
     k="${kv%%=*}"; v="${kv#*=}"
     case "$k" in
-      due|start) isdate "$v"; parts+=("$k=$(jenc "$v")") ;;
+      due|start) if [ "$k" = due ] && [ -z "$v" ]; then parts+=("due=null"); else isdate "$v"; parts+=("$k=$(jenc "$v")"); fi ;;
       people)    parts+=("$k=$(jslugs "$v")") ;;
       *)         parts+=("$k=$(jenc "$v")") ;;
     esac
@@ -135,12 +135,20 @@ case "$cmd" in
            req POST /api/commit "$(jobj "text=$(jenc "${1:-off today}")" "tasks=[]" "off=true")" ;;
   claim)   ensure_auth
            me="$(req GET /api/me | python3 -c 'import json,sys; print(json.load(sys.stdin)["slug"])')"
-           id="$(echo "$1" | tr a-z A-Z)"
-           if req GET "/api/tasks/$id" | python3 -c 'import json,sys; t=json.load(sys.stdin); sys.exit(0 if sys.argv[1] in (t.get("assignees") or []) else 1)' "$me" 2>/dev/null; then
-             echo "$id is already yours."; exit 0
-           fi
+           id="$(echo "$1" | tr a-z A-Z)"; date="${2:-}"
+           [ -n "$date" ] && isdate "$date"
+           # mine: already yours; due: in a week, live, with no due date (Clio refuses the claim without one)
+           state="$(req GET "/api/tasks/$id" | python3 -c 'import json,sys
+t=json.load(sys.stdin)
+if sys.argv[1] in (t.get("assignees") or []): print("mine")
+elif t.get("sprint") and not t.get("due") and t.get("status") not in ("done","dropped"): print("due")
+else: print("ok")' "$me" 2>/dev/null || echo ok)"
+           [ "$state" = mine ] && { echo "$id is already yours."; exit 0; }
+           [ "$state" = due ] && [ -z "$date" ] && { echo "$id is in a week and has no due date: claim it with one, e.g. claim $id 2026-10-30" >&2; exit 2; }
+           parts=("assignee=$(jenc "$me")" 'expect={"assignee":""}')
+           [ -n "$date" ] && parts+=("due=$(jenc "$date")")
            # refused (409) if someone took it since you looked, as in the web face
-           req PATCH "/api/tasks/$(echo "$1" | tr a-z A-Z)" "$(jobj "assignee=$(jenc "$me")" 'expect={"assignee":""}')" ;;
+           req PATCH "/api/tasks/$id" "$(jobj "${parts[@]}")" ;;
   report)  ensure_auth
            id="$(echo "$1" | tr a-z A-Z)"; text="$2"; status="${3:-}"; dt="${4:-}"
            parts=("text=$(jenc "$text")")
