@@ -15,9 +15,14 @@
 #   clio.sh claim   <id>                            put your name on an unclaimed task
 #   clio.sh report  <id> <text> [status] [doneTest] the verb (status: done|dropped|doing|todo)
 #   clio.sh note    <text>                          off-board report → your day file
-#   clio.sh new     <title> [field=value ...]       mint a task (project|sprint|assignee|doneTest|brief|unit)
-#   clio.sh edit    <id> field=value ...            task properties (title|brief|project|sprint|assignee|unit|doneTest)
+#   clio.sh new     <title> [field=value ...]       mint a task (project|sprint|assignee|doneTest|brief|unit|due)
+#   clio.sh edit    <id> field=value ...            task properties (title|brief|project|sprint|assignee|unit|doneTest|due|reason)
+#   clio.sh due     <id> <YYYY-MM-DD> [reason]      set or move a task's due date (a later date needs the reason)
 #   clio.sh focus   <slug> <line>                   set a project's current focus
+#   clio.sh domain                                  every domain, with its projects and their health
+#   clio.sh domain  new <name> <colour> [text]      open a domain (colour: violet|orange|teal|pink|blue|olive|brown|green)
+#   clio.sh project new <name> field=value ...      open a project (domain|start|due|goal required; people|slug)
+#   clio.sh project edit <slug> field=value ...     project properties (name|start|due|goal|domain|people|status|reason)
 #   clio.sh raw     <METHOD> <path> [jsonBody]      escape hatch
 #
 # Config: ~/.config/dfos/ (see the sign-in block); Clio's address in its file `clio`.
@@ -100,6 +105,22 @@ ensure_auth() {
 
 # A comma list of ids → JSON array, uppercased and trimmed.
 jids() { python3 -c 'import json,sys; print(json.dumps([x.strip().upper() for x in sys.argv[1].split(",") if x.strip()]))' "$1"; }
+# A comma list of slugs → JSON array, trimmed.
+jslugs() { python3 -c 'import json,sys; print(json.dumps([x.strip() for x in sys.argv[1].split(",") if x.strip()]))' "$1"; }
+# A date must be YYYY-MM-DD before it is sent.
+isdate() { [[ "$1" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "not a date: $1 (use YYYY-MM-DD)" >&2; exit 2; }; }
+# field=value pairs → JSON object parts in the array `parts`; dates are checked, people is a list.
+fields() {
+  local kv k v
+  for kv in "$@"; do
+    k="${kv%%=*}"; v="${kv#*=}"
+    case "$k" in
+      due|start) isdate "$v"; parts+=("$k=$(jenc "$v")") ;;
+      people)    parts+=("$k=$(jslugs "$v")") ;;
+      *)         parts+=("$k=$(jenc "$v")") ;;
+    esac
+  done
+}
 
 
 cmd="${1:-mine}"; shift || true
@@ -130,15 +151,42 @@ case "$cmd" in
   new)     ensure_auth
            title="$1"; shift
            parts=("title=$(jenc "$title")")
-           for kv in "$@"; do parts+=("${kv%%=*}=$(jenc "${kv#*=}")"); done
+           fields "$@"
            req POST /api/tasks "$(jobj "${parts[@]}")" ;;
   edit)    ensure_auth
            id="$(echo "$1" | tr a-z A-Z)"; shift
            parts=()
-           for kv in "$@"; do parts+=("${kv%%=*}=$(jenc "${kv#*=}")"); done
-           [ ${#parts[@]} -eq 0 ] && { echo "usage: edit <id> field=value ...  (title|brief|project|sprint|assignee|unit|doneTest)" >&2; exit 2; }
+           fields "$@"
+           [ ${#parts[@]} -eq 0 ] && { echo "usage: edit <id> field=value ...  (title|brief|project|sprint|assignee|unit|doneTest|due|reason)" >&2; exit 2; }
+           req PATCH "/api/tasks/$id" "$(jobj "${parts[@]}")" ;;
+  due)     [ $# -ge 2 ] || { echo "usage: due <id> <YYYY-MM-DD> [reason]" >&2; exit 2; }
+           isdate "$2"; ensure_auth
+           id="$(echo "$1" | tr a-z A-Z)"
+           parts=("due=$(jenc "$2")")
+           [ -n "${3:-}" ] && parts+=("reason=$(jenc "$3")")
            req PATCH "/api/tasks/$id" "$(jobj "${parts[@]}")" ;;
   focus)   ensure_auth; req PATCH "/api/projects/$1" "$(jobj "focus=$(jenc "$2")")" ;;
+  domain)  ensure_auth
+           case "${1:-}" in
+             "")  req GET /api/domains ;;
+             new) [ $# -ge 3 ] || { echo "usage: domain new <name> <colour> [description]" >&2; exit 2; }
+                  parts=("name=$(jenc "$2")" "colour=$(jenc "$3")")
+                  [ -n "${4:-}" ] && parts+=("description=$(jenc "$4")")
+                  req POST /api/domains "$(jobj "${parts[@]}")" ;;
+             *)   echo "usage: domain | domain new <name> <colour> [description]" >&2; exit 2 ;;
+           esac ;;
+  project) ensure_auth
+           case "${1:-}" in
+             new)  [ $# -ge 2 ] || { echo "usage: project new <name> domain=<slug> start=<date> due=<date> goal=<text> [people=a,b]" >&2; exit 2; }
+                   parts=("name=$(jenc "$2")"); shift 2
+                   fields "$@"
+                   req POST /api/projects "$(jobj "${parts[@]}")" ;;
+             edit) [ $# -ge 3 ] || { echo "usage: project edit <slug> field=value ...  (name|start|due|goal|domain|people|status|reason)" >&2; exit 2; }
+                   slug="$2"; shift 2; parts=()
+                   fields "$@"
+                   req PATCH "/api/projects/$slug" "$(jobj "${parts[@]}")" ;;
+             *)    echo "usage: project new <name> field=value ... | project edit <slug> field=value ..." >&2; exit 2 ;;
+           esac ;;
   raw)     ensure_auth; req "$1" "$2" "${3:-}" ;;
   *)       echo "unknown command: $cmd (see header for usage)" >&2; exit 2 ;;
 esac

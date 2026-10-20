@@ -7,15 +7,17 @@ description: Mint a new DF Labs (Clio) task. Use when the member says "new clio 
 
 ```
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" new "<title — name the result, not the activity>"
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" new "<title>" project=website sprint=2026-W38 doneTest="<how we will know it is done>"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" new "<title>" project=website sprint=2026-W38 due=2026-09-25 doneTest="<how we will know it is done>"
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" new "<title>" assignee=ana brief="<one paragraph of context>"
 ```
 
 Fields (all optional after the title): `project` (slug), `sprint` (id),
 `assignee` (slug — defaults to you), `doneTest`, `brief`, `unit`
-(`task` or `question`).
+(`task` or `question`), `due` (`YYYY-MM-DD`).
 
 - The title names the result. "Poster public" beats "work on poster".
+- **A task in a week needs a due date.** With `sprint=` set, ask for `due=`
+  too; Clio refuses the task without it. A backlog task may have none.
 - A done needs only the words, which become the receipt. A done-test is
   optional; offer one when the work is concrete enough to have it. A
   `question` unit is for open questions.
