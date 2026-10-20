@@ -15,12 +15,12 @@
 #   clio.sh claim   <id> [YYYY-MM-DD]               put your name on an unclaimed task (the date when it is in a week with none)
 #   clio.sh report  <id> <text> [status] [doneTest] the verb (status: done|dropped|doing|todo)
 #   clio.sh note    <text>                          off-board report → your day file
-#   clio.sh new     <title> [field=value ...]       mint a task (project|sprint|assignee|doneTest|brief|unit|due)
-#   clio.sh edit    <id> field=value ...            task properties (title|brief|project|sprint|assignee|unit|doneTest|due|reason)
+#   clio.sh new     <title> domain=<slug> [field=value ...]  mint a task (domain required unless project= given; project|sprint|assignee|doneTest|brief|unit|due)
+#   clio.sh edit    <id> field=value ...            task properties (title|brief|domain|project|sprint|assignee|unit|doneTest|due|reason)
 #   clio.sh due     <id> <YYYY-MM-DD> [reason]      set or move a task's due date (a later date needs the reason)
-#   clio.sh focus   <slug> <line>                   set a project's current focus
+#   clio.sh focus   <slug> <line>                   set a dated project's current focus
 #   clio.sh domain                                  every domain, with its projects and their health
-#   clio.sh domain  new <name> <colour> [text]      open a domain (colour: violet|orange|teal|pink|blue|olive|brown|green)
+#   clio.sh domain  new <name> <colour> [text]      open a domain (colour: violet|orange|teal|pink|blue|olive|brown|green|slate)
 #   clio.sh project new <name> field=value ...      open a project (domain|start|due|goal required; people|slug)
 #   clio.sh project edit <slug> field=value ...     project properties (name|start|due|goal|domain|people|status|reason)
 #   clio.sh checkout                                the end of your day: due today or late, checked in on, also worked on

@@ -192,8 +192,14 @@ For clio 0.4.0 (T-158 releases 2 and 3: `checkout`, `timeline`): merge only
 after Clio's releases 2 and 3 are deployed. Older Clio has no
 `/api/checkout` or `/api/timeline`.
 
+For clio 0.5.0 (no General: `domain=` on `new` and `edit`, colour `slate`):
+merge only after Clio's no-General release is deployed. Older Clio ignores
+`domain=` on a task. Plugin 0.4.0 keeps working against the new Clio: `new`
+with no domain gets a 400 naming the domains.
+
 ## Change log
 
+- 2026-10-21 — clio 0.5.0, from Clio's no-General release: every task has a domain and a project is optional. `new` takes `domain=` (required unless `project=` is given) and the skill asks for a domain from `domain` when none is named; `edit` takes `domain=`, and `project=` with no value takes a task out of its project. General is gone from every skill; `domain new` accepts the colour `slate`; `focus` is for dated projects only. Not on `main` until that release is deployed.
 - 2026-10-20 — clio 0.4.0, from Clio T-158 releases 2 and 3: `checkout` (no args: `GET /api/checkout`, the three lists; with items: `POST /api/checkout`, one commit) and `timeline [from] [to] [domain=]` (`GET /api/timeline`, printed as projects with dates, health and late marks). Skills `checkout` and `timeline`; `report` and `checkin` say Home's end of the day is now Check out and Report on a task stays. Not on `main` until Clio's releases 2 and 3 are deployed.
 - 2026-10-20 — clio 0.3.2: `claim` sends `due` only when the task is live (todo or doing), undated and in the open week (read from `GET /api/sprints`); a date given for a task that already has one is ignored and the script says so; `archived` counts as not live. When the weeks cannot be read it still asks, "if its week is still open".
 - 2026-10-20 — clio 0.3.1: `claim <id> [YYYY-MM-DD]`: claiming a live task in a week with no due date needs the date, sent in the same PATCH (Clio refuses the claim without it); the script stops with a clear message when it is missing, and the checkin skill asks for it. `edit due=` with no value clears the date (`"due": null`).

@@ -12,11 +12,12 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" domain new "Sales & Business" orang
 
 - `domain` answers every domain with its projects: dates, goal, people,
   health (On track, At risk, Late, Done) and done / doing / total task counts.
-  Summarise it; never dump the JSON. General (each domain's undated project)
-  has no health.
+  Summarise it; never dump the JSON. A domain is never done and has no due
+  date; it clusters projects, and its tasks with no project are counted as
+  "No project".
 - A new domain needs a name and a colour: `violet`, `orange`, `teal`,
-  `pink`, `blue`, `olive`, `brown` or `green`. The description is optional.
-  Clio makes its General project with it and answers both slugs.
+  `pink`, `blue`, `olive`, `brown`, `green` or `slate`. The description is
+  optional. Clio answers its slug.
 - A domain has no owner and no person. Do not ask for one.
 - Confirm the name and colour before sending; surface the hash.
 

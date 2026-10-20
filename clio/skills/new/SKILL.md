@@ -6,12 +6,17 @@ description: Mint a new DF Labs (Clio) task. Use when the member says "new clio 
 # Mint a task
 
 ```
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" new "<title — name the result, not the activity>"
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" new "<title>" project=website sprint=2026-W38 due=2026-09-25 doneTest="<how we will know it is done>"
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" new "<title>" assignee=ana brief="<one paragraph of context>"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" new "<title — name the result, not the activity>" domain=operations
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" new "<title>" project=portfolio-site-v2 sprint=2026-W38 due=2026-09-25 doneTest="<how we will know it is done>"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" new "<title>" domain=df-os assignee=ana brief="<one paragraph of context>"
 ```
 
-Fields (all optional after the title): `project` (slug), `sprint` (id),
+- **Every task has a domain.** Give `domain=<slug>`, or `project=<slug>` (a
+  dated project; the task takes its domain). A project is optional: impromptu
+  work is a task in its domain with no project. When the member names neither,
+  list the domains (`clio.sh domain`) and ask; never guess one.
+
+Other fields (all optional): `project` (slug of a dated project), `sprint` (id),
 `assignee` (slug — defaults to you), `doneTest`, `brief`, `unit`
 (`task` or `question`), `due` (`YYYY-MM-DD`).
 

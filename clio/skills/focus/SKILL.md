@@ -9,7 +9,8 @@ description: Set a DF Labs (Clio) project's current focus — the one line that 
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" focus website "<one line: what matters most on this project right now>"
 ```
 
-- Project slugs come from `board` → `projects`.
+- Project slugs come from `board` → `projects`. Only a dated project has a
+  focus; a domain's words are its description.
 - One line, present tense, about the project — not a task list.
 - Signed commit; surface the hash.
 

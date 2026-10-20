@@ -16,8 +16,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/clio.sh" timeline domain=sales
   late one runs on to today.
 - Each domain lists its dated projects: start → due, health (On track, At
   risk, Late, Done), done / doing / total tasks, and "N days late". Under a
-  project, its late tasks with whose they are. General projects have no dates
-  and are not on it.
+  project, its late tasks with whose they are. Tasks with no project are not
+  on it.
 - Summarise: what is late first, then at risk, then the rest. Name the work,
   not the people, when something slips.
 - It only reads. Dates move with `due` (a task) and `project edit` (a
